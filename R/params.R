@@ -1,7 +1,7 @@
 # roxygen2::roxygenise()
 
 use_log = TRUE
-use_JDBC = TRUE
+use_JDBC = FALSE
 as.data.table.output = TRUE
 clear.resulset = TRUE
 

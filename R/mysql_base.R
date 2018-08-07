@@ -36,7 +36,17 @@ ms.connect <- function (
   library(DBI)
   if (use_log) multiplelines.message(paste0("[Query Time]: ",format(Sys.time(), "%Y%m%d_%H_%M_%S"),"\n"))
   if (use_log) multiplelines.message(paste0("[Query Input]:\n Connect \n"))
-  if (use_JDBC) {
+  
+  option_mysql_driver = getOption("mysql_driver")
+  if (is.null(option_mysql_driver)) {
+    if (use_JDBC) {
+      option_mysql_driver = "RJDBC"
+    } else {
+      option_mysql_driver = "RMariaDB"
+    }
+  }
+  
+  if (option_mysql_driver == "RJDBC") {
     library(RJDBC)
     
     strParams = ""
@@ -51,7 +61,7 @@ ms.connect <- function (
       url = paste0("jdbc:mysql://",host,":",port,"/",schema,strParams), 
       user = user,
       pass = pass)
-  } else {
+  } else if (option_mysql_driver == "RMySQL") {
     library(RMySQL)
     
     drv <- RMySQL::MySQL()
@@ -65,6 +75,25 @@ ms.connect <- function (
     if (tolower(Sys.info()['sysname']) != "windows") {
       dbGetQuery(ch,'SET NAMES utf8')
     }
+  } else {
+    library(RMariaDB)
+    
+    if (Sys.info()["sysname"] != "Linux") {
+      params_file = connData$db_mysql_ssl_ca_params
+    } else {
+      params_file = NULL
+    }
+    
+    drv <- RMariaDB::MariaDB()
+    
+    ch <- dbConnect(
+      drv = drv, 
+      username = user,
+      password = pass, 
+      host = host, 
+      port = port,
+      default.file = params_file
+    )
   }
   if (!is.null(schema)) {
     if (use_log) multiplelines.message(paste0("[Query Time]: ",format(Sys.time(), "%Y%m%d_%H_%M_%S"),"\n"))
@@ -136,12 +165,14 @@ ms.Query <- function(ch, query, asDataTable=mysqltools:::as.data.table.output, c
 #' @export
 ms.ClearResults <- function(ch) {
   tryCatch({
-    if (class(ch) != "JDBCConnection") {
-      listResults = dbListResults(ch)
-      if (length(listResults)>0) {
-        if (use_log) message(paste0("[Clearing...]"))
-        DBI::dbClearResult(dbListResults(ch)[[1]])
-        if (use_log) message(paste0("[Cleared]"))
+    if (getOption("mysql_clear_results")) {
+      if (class(ch) != "JDBCConnection") {
+        listResults = dbListResults(ch)
+        if (length(listResults)>0) {
+          if (use_log) message(paste0("[Clearing...]"))
+          DBI::dbClearResult(dbListResults(ch)[[1]])
+          if (use_log) message(paste0("[Cleared]"))
+        }
       }
     }
   }, error = function(e) {warning(e)})
