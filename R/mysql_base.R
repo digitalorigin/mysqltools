@@ -92,7 +92,8 @@ ms.connect <- function (
       password = pass, 
       host = host, 
       port = port,
-      default.file = params_file
+      default.file = params_file,
+      bigint = "numeric"
     )
   }
   if (!is.null(schema)) {
