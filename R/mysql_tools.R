@@ -97,7 +97,7 @@ ms.colnames <- function (ch, strTable) {
   if (use_log) multiplelines.message(paste0("[Query Time]: ",format(Sys.time(), "%Y%m%d_%H_%M_%S"),"\n"))
   if (use_log) multiplelines.message(paste0("[Query Input]:\n \tDBI::dbListFields \n"))
   timer = proc.time()
-  if (attr(class(ch), "package") == "RJDBC") {
+  if (attr(class(ch), "package") %in% c("RJDBC", "RMariaDB")) {
     suppressWarnings({
     res <- DBI::dbSendQuery(ch, paste0("select * from ",strTable," limit 0"))
     })
