@@ -166,7 +166,7 @@ ms.Query <- function(ch, query, asDataTable=mysqltools:::as.data.table.output, c
 #' @export
 ms.ClearResults <- function(ch) {
   tryCatch({
-    if (getOption("mysql_clear_results")) {
+    if (isTRUE(getOption("mysql_clear_results"))) {
       if (class(ch) != "JDBCConnection") {
         listResults = dbListResults(ch)
         if (length(listResults)>0) {
