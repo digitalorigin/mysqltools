@@ -11,4 +11,6 @@ Depends:
     RMySQL,
     RMariaDB,
     DBI
+Suggests:
+    RJDBC
 RoxygenNote: 6.0.1

@@ -27,16 +27,15 @@ ms.connect <- function (
   host,
   port = "3306",
   schema = NULL,
-  user = connData$IAM_user, 
+  user = connData$IAM_user,
   pass = connData$IAM_pass,
   ssl_ca_params = connData$db_mysql_ssl_ca_params,
   use_ssl = !is.null(connData$db_mysql_ssl_ca_params),
   jar = system.file("java", "mysql-connector-java-5.1.40-bin.jar", package = "mysqltools")
 ) {
-  library(DBI)
   if (use_log) multiplelines.message(paste0("[Query Time]: ",format(Sys.time(), "%Y%m%d_%H_%M_%S"),"\n"))
   if (use_log) multiplelines.message(paste0("[Query Input]:\n Connect \n"))
-  
+
   option_mysql_driver = getOption("mysql_driver")
   if (is.null(option_mysql_driver)) {
     if (use_JDBC) {
@@ -45,52 +44,49 @@ ms.connect <- function (
       option_mysql_driver = "RMariaDB"
     }
   }
-  
+
   if (option_mysql_driver == "RJDBC") {
-    library(RJDBC)
-    
+    if (!requireNamespace("RJDBC", quietly = TRUE)) {
+      stop("Package RJDBC needed for this function to work. Please install it.", call. = FALSE)
+    }
     strParams = ""
     if (use_ssl) strParams = paste0("?verifyServerCertificate=false&useSSL=true&requireSSL=true&useOldAliasMetadataBehavior=true")
-    
-    drv <- JDBC(
+
+    drv <- RJDBC::JDBC(
       "com.mysql.jdbc.Driver",
       jar)
-    
+
     ch <- dbConnect(
-      drv, 
-      url = paste0("jdbc:mysql://",host,":",port,"/",schema,strParams), 
+      drv,
+      url = paste0("jdbc:mysql://",host,":",port,"/",schema,strParams),
       user = user,
       pass = pass)
   } else if (option_mysql_driver == "RMySQL") {
-    library(RMySQL)
-    
     drv <- RMySQL::MySQL()
-    
+
     ch <- RMySQL::dbConnect(
-      drv, 
-      user = user, 
-      password = pass, 
+      drv,
+      user = user,
+      password = pass,
       host = host,
       default.file = ssl_ca_params)
     if (tolower(Sys.info()['sysname']) != "windows") {
       dbGetQuery(ch,'SET NAMES utf8')
     }
   } else {
-    library(RMariaDB)
-    
     if (Sys.info()["sysname"] != "Linux") {
       params_file = connData$db_mysql_ssl_ca_params
     } else {
       params_file = NULL
     }
-    
+
     drv <- RMariaDB::MariaDB()
-    
+
     ch <- dbConnect(
-      drv = drv, 
+      drv = drv,
       username = user,
-      password = pass, 
-      host = host, 
+      password = pass,
+      host = host,
       port = port,
       default.file = params_file,
       bigint = "numeric"
